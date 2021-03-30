@@ -22,41 +22,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dtsgenerator_1 = __importStar(require("dtsgenerator"));
 const fs_1 = __importStar(require("fs"));
 const minimist_1 = __importDefault(require("minimist"));
 const prettier_1 = __importDefault(require("prettier"));
 const util_1 = __importDefault(require("util"));
-const dtsgenerator_1 = __importStar(require("dtsgenerator"));
-// /**
-//  * Generate typescript types for the given OpenAPI spec.
-//  */
-// const generateSpecTypes = (params: {
-//   specFilename: string;
-//   outputFilename?: string;
-// }) =>
-//   adaptContentMediaTypes(params.specFilename)
-//     .then(
-//       (tmpSpecFile) =>
-//         new Promise<string>((resolve, reject) => {
-//           exec(
-//             `npx dtsgen -c dtsgen.json ${tmpSpecFile}`,
-//             (err, stdout, stderr) => {
-//               fs.unlinkSync(tmpSpecFile);
-//               if (err || stderr) {
-//                 reject(err || stderr);
-//               } else {
-//                 resolve(stdout);
-//               }
-//             }
-//           );
-//         })
-//     )
-//     .then(prettify("typescript"))
-//     .then(saveToFile(params.outputFilename))
-//     .then((types) => {
-//       console.log("Generated OpenApi typescript types");
-//       return types;
-//     });
 /**
  * Generate typescript types for the given OpenAPI spec.
  */
@@ -71,22 +41,6 @@ const generateSpecTypes = (params) => adaptContentMediaTypes(params.specFilename
         },
     },
 }))
-    // .then(
-    //   (tmpSpecFile) =>
-    //     new Promise<string>((resolve, reject) => {
-    //       exec(
-    //         `npx dtsgen -c dtsgen.json ${tmpSpecFile}`,
-    //         (err, stdout, stderr) => {
-    //           fs.unlinkSync(tmpSpecFile);
-    //           if (err || stderr) {
-    //             reject(err || stderr);
-    //           } else {
-    //             resolve(stdout);
-    //           }
-    //         }
-    //       );
-    //     })
-    // )
     .then(prettify("typescript"))
     .then(saveToFile(params.outputFilename))
     .then((types) => {
@@ -94,8 +48,7 @@ const generateSpecTypes = (params) => adaptContentMediaTypes(params.specFilename
     return types;
 });
 /**
- * Replace media types that `dtsgenerator`doesn't support.
- * See: https://github.com/obconnect-io/obconnect-codegen/issues/1
+ * Replace media types that `dtsgenerator` doesn't support.
  */
 const adaptContentMediaTypes = (specFilename) => util_1.default
     .promisify(fs_1.default.readFile)(specFilename, { encoding: "utf8" })
@@ -107,8 +60,6 @@ const adaptContentMediaTypes = (specFilename) => util_1.default
     console.log('Replacing "*/*" with "application/custom2+json"...');
     return spec.replace(/\*\/\*/g, "application/custom2+json");
 });
-// .then(spec => spec.replace(/"application\/json; charset=utf-8"/g, 'application/text+json'))
-// .then((spec) => tempy.write(spec, { extension: "json" }));
 /**
  * Format the given data using `prettier`
  * @param format
