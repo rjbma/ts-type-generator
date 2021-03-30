@@ -5,6 +5,11 @@
   },
   "version": "0.0.1",
   "description": "Generate typescript types for an OpenAPI v3 spec",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rjbma/ts-type-generator"
+  },
   "bin": {
     "generate-ts-types": "./bin/global.js"
   },
