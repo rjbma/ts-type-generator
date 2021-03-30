@@ -1,0 +1,30 @@
+{
+  "name": "ts-type-generator",
+  "engines": {
+    "node": ">10"
+  },
+  "version": "0.0.1",
+  "description": "Generate typescript types for an OpenAPI v3 spec",
+  "bin": {
+    "generate-ts-types": "./bin/global.js"
+  },
+  "preferGlobal": true,
+  "scripts": {
+    "start": "ts-node generate-types.ts",
+    "build": "tsc",
+    "publish": "npm run build && npm publish"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.1",
+    "@types/node": "^13.9.1",
+    "@types/prettier": "^2.1.1",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "dtsgenerator": "3.3.0",
+    "dtsgenerator-express-route-types": "^0.1.5",
+    "minimist": "^1.2.5",
+    "prettier": "^2.1.2",
+    "tempy": "^1.0.1"
+  }
+}
