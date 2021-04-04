@@ -1,7 +1,0 @@
-{
-    "plugins": {
-        "dtsgenerator-express-route-types": {
-            "placeholderType": "any"
-        }
-    }
-}

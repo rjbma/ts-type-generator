@@ -19,7 +19,9 @@ const generateSpecTypes = (params: {
         // @ts-ignore
         config: {
           plugins: {
-            "dtsgenerator-express-route-types": true,
+            "dtsgenerator-express-route-types": {
+              placeholderType: "any",
+            },
           },
         },
       })

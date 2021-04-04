@@ -3,7 +3,7 @@
   "engines": {
     "node": ">10"
   },
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Generate typescript types for an OpenAPI v3 spec",
   "license": "ISC",
   "repository": {
@@ -20,7 +20,6 @@
   "scripts": {
     "start": "ts-node src/generate-types.ts",
     "build": "tsc",
-    "postbuild": "cp dtsgen.json build/",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
@@ -32,7 +31,7 @@
   },
   "dependencies": {
     "dtsgenerator": "3.7.1",
-    "dtsgenerator-express-route-types": "^0.1.5",
+    "dtsgenerator-express-route-types": "^0.1.6",
     "minimist": "^1.2.5",
     "prettier": "^2.2.1",
     "tempy": "^1.0.1"
