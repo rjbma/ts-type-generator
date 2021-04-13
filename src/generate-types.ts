@@ -44,7 +44,7 @@ const adaptContentMediaTypes = (specFilename: string): Promise<string> =>
         'Replacing "application/json; charset=utf-8" with "application/custom1+json"...'
       );
       return spec.replace(
-        /"application\/json; charset=utf-8"/g,
+        /application\/json; charset=utf-8/g,
         "application/custom1+json"
       );
     })
