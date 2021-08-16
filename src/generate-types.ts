@@ -39,20 +39,27 @@ const generateSpecTypes = (params: {
  * Replace media types that `dtsgenerator` doesn't support.
  */
 const adaptContentMediaTypes = (spec: string): Promise<string> =>
-  Promise.resolve(spec)
-    .then((spec) => {
+  Promise.resolve(
+    [
+      {
+        source: /application\/json; charset=utf-8/g,
+        target: "application/custom1+json",
+      },
+      {
+        source: /\*\/\*/g,
+        target: "application/custom2+json",
+      },
+      {
+        source: /application\/x-pem-file/g,
+        target: "text/plain",
+      },
+    ].reduce((acc, replacer) => {
       console.log(
-        'Replacing "application/json; charset=utf-8" with "application/custom1+json"...'
+        `Replacing "${replacer.source}" with "${replacer.target}"...`
       );
-      return spec.replace(
-        /application\/json; charset=utf-8/g,
-        "application/custom1+json"
-      );
-    })
-    .then((spec) => {
-      console.log('Replacing "*/*" with "application/custom2+json"...');
-      return spec.replace(/\*\/\*/g, "application/custom2+json");
-    });
+      return spec.replace(replacer.source, replacer.target);
+    }, spec)
+  );
 
 const loadSpecFromFile = (
   specFileName: string,
