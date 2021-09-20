@@ -57,7 +57,7 @@ const adaptContentMediaTypes = (spec: string): Promise<string> =>
       console.log(
         `Replacing "${replacer.source}" with "${replacer.target}"...`
       );
-      return spec.replace(replacer.source, replacer.target);
+      return acc.replace(replacer.source, replacer.target);
     }, spec)
   );
 
