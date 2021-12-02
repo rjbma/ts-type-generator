@@ -12,6 +12,7 @@ const generateSpecTypes = (params: {
   specFilename: string;
   outputFilename?: string;
   dereferenceJsonSchemaPointers: boolean;
+  placeholderType: string;
 }) =>
   loadSpecFromFile(params.specFilename, params.dereferenceJsonSchemaPointers)
     .then(adaptContentMediaTypes)
@@ -22,7 +23,7 @@ const generateSpecTypes = (params: {
         config: {
           plugins: {
             "dtsgenerator-express-route-types": {
-              placeholderType: "any",
+              placeholderType: params.placeholderType,
             },
           },
         },
@@ -90,17 +91,23 @@ const saveToFile = (filename: string | undefined) => (data: string) => {
 };
 
 const SOURCE_ARG = "source";
+const PLACEHOLDER_TYPE_ARG = "placeholder-type";
 const DEST_ARG = "dest";
 const DEREF_ARG = "deref";
 const args = parseArgs(process.argv, {
-  string: [SOURCE_ARG, DEST_ARG],
+  string: [SOURCE_ARG, DEST_ARG, PLACEHOLDER_TYPE_ARG],
   boolean: [DEREF_ARG],
 });
 
 const source: string = args[SOURCE_ARG];
 if (!source) {
-  throw new Error("--source is required");
+  console.error("--source is required. Example:\n");
+  console.error(
+    "   generate-types --source=api-spec.json --placeholder-type=unknown\n"
+  );
+  process.exit(-1);
 }
+const placeholderType: string = args[PLACEHOLDER_TYPE_ARG] || "any";
 
 source.split(/,|;/).reduce((acc, source) => {
   return acc.then(() => {
@@ -113,6 +120,7 @@ source.split(/,|;/).reduce((acc, source) => {
       specFilename: source,
       outputFilename: dest,
       dereferenceJsonSchemaPointers: args[DEREF_ARG],
+      placeholderType,
     });
   });
 }, Promise.resolve(""));
