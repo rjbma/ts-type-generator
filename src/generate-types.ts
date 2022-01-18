@@ -12,23 +12,36 @@ const generateSpecTypes = (params: {
   specFilename: string;
   outputFilename?: string;
   dereferenceJsonSchemaPointers: boolean;
+  apiRootName?: string;
+  componentsRootName?: string;
   placeholderType: string;
 }) =>
   loadSpecFromFile(params.specFilename, params.dereferenceJsonSchemaPointers)
     .then(adaptContentMediaTypes)
     .then((spec) => parseFileContent(spec))
-    .then((spec) =>
-      dts({
-        contents: [parseSchema(spec)],
-        config: {
-          plugins: {
-            "dtsgenerator-express-route-types": {
-              placeholderType: params.placeholderType,
+    .then((spec) => {
+      const plugins: any = {
+        "@dtsgenerator/replace-namespace": {
+          map: [
+            {
+              from: ["Components"],
+              to: [params.componentsRootName || "Components"],
             },
-          },
+            {
+              from: ["Paths"],
+              to: [params.apiRootName || "Paths"],
+            },
+          ],
         },
-      })
-    )
+        "dtsgenerator-express-route-types": {
+          placeholderType: params.placeholderType,
+        },
+      };
+      return dts({
+        contents: [parseSchema(spec)],
+        config: { plugins },
+      });
+    })
     .then(prettify("typescript"))
     .then(saveToFile(params.outputFilename))
     .then((types) => {
@@ -92,10 +105,18 @@ const saveToFile = (filename: string | undefined) => (data: string) => {
 
 const SOURCE_ARG = "source";
 const PLACEHOLDER_TYPE_ARG = "placeholder-type";
+const API_ROOT_NAME_ARG = "paths";
+const COMPS_ROOT_NAME = "components";
 const DEST_ARG = "dest";
 const DEREF_ARG = "deref";
 const args = parseArgs(process.argv, {
-  string: [SOURCE_ARG, DEST_ARG, PLACEHOLDER_TYPE_ARG],
+  string: [
+    SOURCE_ARG,
+    DEST_ARG,
+    API_ROOT_NAME_ARG,
+    COMPS_ROOT_NAME,
+    PLACEHOLDER_TYPE_ARG,
+  ],
   boolean: [DEREF_ARG],
 });
 
@@ -103,7 +124,7 @@ const source: string = args[SOURCE_ARG];
 if (!source) {
   console.error("--source is required. Example:\n");
   console.error(
-    "   generate-types --source=api-spec.json --placeholder-type=unknown\n"
+    "   generate-types --source=api-spec.json --placeholder-type=unknown --paths=Paths --components=Components\n"
   );
   process.exit(-1);
 }
@@ -120,6 +141,8 @@ source.split(/,|;/).reduce((acc, source) => {
       specFilename: source,
       outputFilename: dest,
       dereferenceJsonSchemaPointers: args[DEREF_ARG],
+      apiRootName: args[API_ROOT_NAME_ARG],
+      componentsRootName: args[COMPS_ROOT_NAME],
       placeholderType,
     });
   });
