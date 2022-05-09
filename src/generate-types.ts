@@ -3,7 +3,11 @@ import fs, { writeFileSync } from "fs";
 import parseArgs from "minimist";
 import prettier, { BuiltInParserName } from "prettier";
 import $RefParser from "@apidevtools/json-schema-ref-parser";
-import util from "util";
+import util, { promisify } from "util";
+import Glob from "glob";
+import { exit } from "process";
+
+const glob = promisify(Glob.glob);
 
 /**
  * Generate typescript types for the given OpenAPI spec.
@@ -130,20 +134,35 @@ if (!source) {
 }
 const placeholderType: string = args[PLACEHOLDER_TYPE_ARG] || "any";
 
-source.split(/,|;/).reduce((acc, source) => {
-  return acc.then(() => {
-    let dest: string = args[DEST_ARG];
-    if (!dest) {
-      dest = source + ".d.ts";
+const globs = source.split(/,|;/).map((s) => glob(s, { nonull: true }));
+Promise.all(globs)
+  .then((filename) => Array.from(new Set(filename.flat())))
+  .then((uniqueFilenames) => {
+    const notFound = uniqueFilenames.filter(
+      (filename) => !fs.existsSync(filename)
+    );
+    if (notFound.length) {
+      console.error("Source file(s) not found: ", notFound);
+      exit(-1);
     }
-    console.log(`Generating types for ${source} -> ${dest}...`);
-    return generateSpecTypes({
-      specFilename: source,
-      outputFilename: dest,
-      dereferenceJsonSchemaPointers: args[DEREF_ARG],
-      apiRootName: args[API_ROOT_NAME_ARG],
-      componentsRootName: args[COMPS_ROOT_NAME],
-      placeholderType,
-    });
-  });
-}, Promise.resolve(""));
+    return uniqueFilenames;
+  })
+  .then((filenames) =>
+    filenames.reduce((acc, source) => {
+      return acc.then(() => {
+        let dest: string = args[DEST_ARG];
+        if (!dest) {
+          dest = source + ".d.ts";
+        }
+        console.log(`Generating types for ${source} -> ${dest}...`);
+        return generateSpecTypes({
+          specFilename: source,
+          outputFilename: dest,
+          dereferenceJsonSchemaPointers: args[DEREF_ARG],
+          apiRootName: args[API_ROOT_NAME_ARG],
+          componentsRootName: args[COMPS_ROOT_NAME],
+          placeholderType,
+        });
+      });
+    }, Promise.resolve(""))
+  );
