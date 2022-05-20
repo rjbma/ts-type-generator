@@ -126,17 +126,29 @@ const args = parseArgs(process.argv, {
 
 const source: string = args[SOURCE_ARG];
 if (!source) {
-  console.error("--source is required. Example:\n");
-  console.error(
-    "   generate-types --source=api-spec.json --placeholder-type=unknown --paths=Paths --components=Components\n"
-  );
+  console.error("--source is required. Examples:");
+  console.error(`
+    generate-types --source=api-spec.json --placeholder-type=unknown --paths=Paths --components=Components
+    generate-types --source=api-spec-1.json,api-spec-2.json --paths=Api1,Api2
+    generate-types --source=api-*.json --placeholder-type=unknown
+    `);
   process.exit(-1);
 }
 const placeholderType: string = args[PLACEHOLDER_TYPE_ARG] || "any";
+const apiRootNames = args[API_ROOT_NAME_ARG];
+const componentsRootNames = args[COMPS_ROOT_NAME];
+
+// make sure we don't rename TS Paths or Components when using glob patterns
+const isGlobPattern = source.search(/\*|\?/gm) != -1;
+if (isGlobPattern && (apiRootNames || componentsRootNames)) {
+  throw new Error(
+    "Cannot specify --paths or --components when using glob patterns"
+  );
+}
 
 const globs = source.split(/,|;/).map((s) => glob(s, { nonull: true }));
 Promise.all(globs)
-  .then((filename) => Array.from(new Set(filename.flat())))
+  .then((filenames) => Array.from(new Set(filenames.flat())))
   .then((uniqueFilenames) => {
     const notFound = uniqueFilenames.filter(
       (filename) => !fs.existsSync(filename)
@@ -148,7 +160,7 @@ Promise.all(globs)
     return uniqueFilenames;
   })
   .then((filenames) =>
-    filenames.reduce((acc, source) => {
+    filenames.reduce((acc, source, idx) => {
       return acc.then(() => {
         let dest: string = args[DEST_ARG];
         if (!dest) {
@@ -159,10 +171,13 @@ Promise.all(globs)
           specFilename: source,
           outputFilename: dest,
           dereferenceJsonSchemaPointers: args[DEREF_ARG],
-          apiRootName: args[API_ROOT_NAME_ARG],
-          componentsRootName: args[COMPS_ROOT_NAME],
+          apiRootName: atPosition(apiRootNames, idx),
+          componentsRootName: atPosition(componentsRootNames, idx),
           placeholderType,
         });
       });
     }, Promise.resolve(""))
   );
+
+const atPosition = (str: string | undefined, pos: number) =>
+  str ? str.split(/,|;/)[pos] : undefined;
