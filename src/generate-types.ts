@@ -4,10 +4,8 @@ import parseArgs from "minimist";
 import prettier, { BuiltInParserName } from "prettier";
 import $RefParser from "@apidevtools/json-schema-ref-parser";
 import util, { promisify } from "util";
-import Glob from "glob";
+import { glob } from "glob";
 import { exit } from "process";
-
-const glob = promisify(Glob.glob);
 
 /**
  * Generate typescript types for the given OpenAPI spec.
@@ -146,7 +144,7 @@ if (isGlobPattern && (apiRootNames || componentsRootNames)) {
   );
 }
 
-const globs = source.split(/,|;/).map((s) => glob(s, { nonull: true }));
+const globs = source.split(/,|;/).map((s) => glob(s, {}));
 Promise.all(globs)
   .then((filenames) => Array.from(new Set(filenames.flat())))
   .then((uniqueFilenames) => {
