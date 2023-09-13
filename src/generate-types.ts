@@ -92,7 +92,7 @@ const loadSpecFromFile = (
  * @param format
  */
 const prettify = (format: BuiltInParserName) => (data: string) =>
-  prettier.format(data, { parser: format });
+  prettier.format(data, { parser: format, trailingComma: 'none' });
 
 /**
  * Save the given data to a file, returning the data back.
