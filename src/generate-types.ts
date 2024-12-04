@@ -3,7 +3,6 @@ import fs, { writeFileSync } from "fs";
 import parseArgs from "minimist";
 import prettier, { BuiltInParserName } from "prettier";
 import $RefParser from "@apidevtools/json-schema-ref-parser";
-import util, { promisify } from "util";
 import { glob } from "glob";
 import { exit } from "process";
 
@@ -13,12 +12,11 @@ import { exit } from "process";
 const generateSpecTypes = (params: {
   specFilename: string;
   outputFilename?: string;
-  dereferenceJsonSchemaPointers: boolean;
   apiRootName?: string;
   componentsRootName?: string;
   placeholderType: string;
 }) =>
-  loadSpecFromFile(params.specFilename, params.dereferenceJsonSchemaPointers)
+  loadSpecFromFile(params.specFilename)
     .then(adaptContentMediaTypes)
     .then((spec) => parseFileContent(spec))
     .then((spec) => {
@@ -77,22 +75,39 @@ const adaptContentMediaTypes = (spec: string): Promise<string> =>
     }, spec)
   );
 
-const loadSpecFromFile = (
-  specFileName: string,
-  dereferenceJsonSchemaPointer: boolean
-) =>
-  dereferenceJsonSchemaPointer
-    ? $RefParser
-        .dereference(specFileName, { continueOnError: false })
-        .then(JSON.stringify)
-    : util.promisify(fs.readFile)(specFileName, { encoding: "utf8" });
+const loadSpecFromFile = (specFileName: string) =>
+  $RefParser
+    .dereference(specFileName, {
+      continueOnError: false,
+      dereference: {
+        excludedPathMatcher: (path: string) => {
+          // make sure to dereference the "parameters" section of a path because dtsgenerator
+          // doesn't seem to support references there
+          //
+          // however we don't want to dereference everything, or else our TS files will be too big
+          if (path == "#" || path.includes("#/paths")) {
+            if (path.includes("/requestBody")) {
+              return true;
+            } else if (path.includes("/responses")) {
+              return true;
+            }
+            console.log(path);
+            return false;
+          } else {
+            // we should be left with only the "parameters" and some other small sections, which are OK to dereference
+            return true;
+          }
+        },
+      },
+    })
+    .then(JSON.stringify);
 
 /**
  * Format the given data using `prettier`
  * @param format
  */
 const prettify = (format: BuiltInParserName) => (data: string) =>
-  prettier.format(data, { parser: format, trailingComma: 'none' });
+  prettier.format(data, { parser: format, trailingComma: "none" });
 
 /**
  * Save the given data to a file, returning the data back.
@@ -110,7 +125,6 @@ const PLACEHOLDER_TYPE_ARG = "placeholder-type";
 const API_ROOT_NAME_ARG = "paths";
 const COMPS_ROOT_NAME = "components";
 const DEST_ARG = "dest";
-const DEREF_ARG = "deref";
 const args = parseArgs(process.argv, {
   string: [
     SOURCE_ARG,
@@ -119,7 +133,6 @@ const args = parseArgs(process.argv, {
     COMPS_ROOT_NAME,
     PLACEHOLDER_TYPE_ARG,
   ],
-  boolean: [DEREF_ARG],
 });
 
 const source: string = args[SOURCE_ARG];
@@ -168,7 +181,6 @@ Promise.all(globs)
         return generateSpecTypes({
           specFilename: source,
           outputFilename: dest,
-          dereferenceJsonSchemaPointers: args[DEREF_ARG],
           apiRootName: atPosition(apiRootNames, idx),
           componentsRootName: atPosition(componentsRootNames, idx),
           placeholderType,
