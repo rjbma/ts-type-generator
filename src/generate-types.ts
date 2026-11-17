@@ -69,10 +69,10 @@ const adaptContentMediaTypes = (spec: string): Promise<string> =>
       },
     ].reduce((acc, replacer) => {
       console.log(
-        `Replacing "${replacer.source}" with "${replacer.target}"...`
+        `Replacing "${replacer.source}" with "${replacer.target}"...`,
       );
       return acc.replace(replacer.source, replacer.target);
-    }, spec)
+    }, spec),
   );
 
 const loadSpecFromFile = (specFileName: string) =>
@@ -91,7 +91,6 @@ const loadSpecFromFile = (specFileName: string) =>
             } else if (path.includes("/responses")) {
               return true;
             }
-            console.log(path);
             return false;
           } else {
             // we should be left with only the "parameters" and some other small sections, which are OK to dereference
@@ -153,7 +152,7 @@ const componentsRootNames = args[COMPS_ROOT_NAME];
 const isGlobPattern = source.search(/\*|\?/gm) != -1;
 if (isGlobPattern && (apiRootNames || componentsRootNames)) {
   throw new Error(
-    "Cannot specify --paths or --components when using glob patterns"
+    "Cannot specify --paths or --components when using glob patterns",
   );
 }
 
@@ -162,7 +161,7 @@ Promise.all(globs)
   .then((filenames) => Array.from(new Set(filenames.flat())))
   .then((uniqueFilenames) => {
     const notFound = uniqueFilenames.filter(
-      (filename) => !fs.existsSync(filename)
+      (filename) => !fs.existsSync(filename),
     );
     if (notFound.length) {
       console.error("Source file(s) not found: ", notFound);
@@ -186,7 +185,7 @@ Promise.all(globs)
           placeholderType,
         });
       });
-    }, Promise.resolve(""))
+    }, Promise.resolve("")),
   );
 
 const atPosition = (str: string | undefined, pos: number) =>
